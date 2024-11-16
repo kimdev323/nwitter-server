@@ -1,41 +1,35 @@
-import { ApolloServer, gql } from "apollo-server";
-import fetch from "node-fetch";
+import { ApolloServer, gql } from 'apollo-server';
+import fetch from 'node-fetch';
 
-let boardDB = [
-  { number: 1, writer: "철수", title: "제목1임", contents: "내용임" },
-  { number: 2, writer: "유리", title: "제목2임", contents: "내용임" },
-  { number: 3, writer: "훈이", title: "제목3임", contents: "내용임" },
-  { number: 4, writer: "맹구", title: "제목4임", contents: "내용임" },
+let tweets = [
+  {
+    id: '1',
+    text: 'Nico',
+  },
+  {
+    id: '2',
+    text: 'Elon',
+  },
 ];
 
 let users = [
   {
-    id: "1",
-    firstName: "Nico",
-    lastName: "las",
+    id: '1',
+    firstName: 'Nico',
+    lastName: 'las',
   },
   {
-    id: "2",
-    firstName: "Elon",
-    lastName: "Mask",
+    id: '2',
+    firstName: 'Elon',
+    lastName: 'Mask',
   },
 ];
 
 const typeDefs = gql`
-  type BoardModel {
-    number: Int
-    writer: String
-    title: String
-    contents: String
-  }
-  type ResponseModel {
-    success: Boolean
-    message: String
-  }
-  input BoardInputModel {
-    writer: String
-    title: String
-    contents: String
+  type Tweet {
+    id: ID
+    text: String
+    author: User
   }
   type User {
     id: ID
@@ -44,14 +38,10 @@ const typeDefs = gql`
     fullName: String
   }
   type Query {
+    allTweets: [Tweet!]!
     allMovies: [Movie!]!
     movie(id: String!): Movie
     allUsers: [User]
-    fetchBoards: [BoardModel]
-    fetchBoard(number: Int): BoardModel
-  }
-  type Mutation {
-    createBoard(boardInput: BoardInputModel): ResponseModel
   }
   type Movie {
     id: Int!
@@ -81,41 +71,21 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
+    allTweets() {
+      return tweets;
+    },
     allUsers() {
       return users;
     },
-    fetchBoards() {
-      return boardDB;
-    },
-    fetchBoard(_, { number }) {
-      const board = boardDB.find((board) => board.number === number);
-      return board;
-    },
     allMovies() {
-      return fetch("https://yts.mx/api/v2/list_movies.json").then((r) =>
+      return fetch('https://yts.mx/api/v2/list_movies.json').then((r) =>
         r.json().then((json) => json.data.movies)
       );
     },
     movie(_, { id }) {
-      return fetch(
-        `https://yts.mx/api/v2/movie_details.json?movie_id=${id}`
-      ).then((r) => r.json().then((json) => json.data.movie));
-    },
-  },
-  Mutation: {
-    createBoard: (_, { boardInput }) => {
-      const { writer, title, contents } = boardInput;
-      const isWritter = boardDB.some((board) => board.writer === writer);
-      if (isWritter === true)
-        return { success: false, message: "new board failed" };
-      const newBoard = {
-        number: boardDB.length + 1,
-        writer,
-        title,
-        contents,
-      };
-      boardDB.push(newBoard);
-      return { success: true, message: "new board success" };
+      return fetch(`https://yts.mx/api/v2/movie_details.json?movie_id=${id}`).then((r) =>
+        r.json().then((json) => json.data.movie)
+      );
     },
   },
   User: {
